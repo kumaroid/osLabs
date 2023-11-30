@@ -1,11 +1,8 @@
-cmake_minimum_required(VERSION 3.27.5)
-project(lab1)
-
 set(CMAKE_CXX_STANDARD 17)
-SET(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+add_executable(main src/parent.cpp main.cpp)
+add_executable(child src/child.cpp)
 
-add_executable("son.out" son.cpp)
-add_executable(${PROJECT_NAME} main.cpp)
-
-
+target_include_directories(main PRIVATE include)
+target_include_directories(child PRIVATE include)
