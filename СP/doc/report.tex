@@ -1,0 +1,664 @@
+\documentclass[a4paper, 12pt]{article}
+\usepackage{cmap}
+\usepackage[12pt]{extsizes}			
+\usepackage{mathtext} 				
+\usepackage[T2A]{fontenc}			
+\usepackage[utf8]{inputenc}			
+\usepackage[english,russian]{babel}
+\usepackage{setspace}
+\singlespacing
+\usepackage{amsmath,amsfonts,amssymb,amsthm,mathtools}
+\usepackage{fancyhdr}
+\usepackage{soulutf8}
+\usepackage{euscript}
+\usepackage{mathrsfs}
+\usepackage{listings}
+
+\usepackage[colorlinks=true, urlcolor=blue, linkcolor=black]{hyperref}
+
+\pagestyle{fancy}
+\usepackage{indentfirst}
+\usepackage[top=10mm]{geometry}
+\rhead{}
+\lhead{}
+\renewcommand{\headrulewidth}{0mm}
+\usepackage{tocloft}
+\renewcommand{\cftsecleader}{\cftdotfill{\cftdotsep}}
+\usepackage[dvipsnames]{xcolor}
+
+\lstdefinestyle{mystyle}{ 
+	keywordstyle=\color{OliveGreen},
+	numberstyle=\tiny\color{Gray},
+	stringstyle=\color{BurntOrange},
+	basicstyle=\ttfamily\footnotesize,
+	breakatwhitespace=false,         
+	breaklines=true,                 
+	captionpos=b,                    
+	keepspaces=true,                 
+	numbers=left,                    
+	numbersep=5pt,                  
+	showspaces=false,                
+	showstringspaces=false,
+	showtabs=false,                  
+	tabsize=2
+}
+
+\lstset{style=mystyle}
+
+\begin{document}
+\thispagestyle{empty}	
+\begin{center}
+	Московский авиационный институт
+	
+	(Национальный исследовательский университет)
+	
+	Факультет "Информационные технологии и прикладная математика"
+	
+	Кафедра "Вычислительная математика и программирование"
+	
+\end{center}
+\vspace{40ex}
+\begin{center}
+	\textbf{\large{Курсовой проект по курсу \linebreak \textquotedblleft Операционные системы\textquotedblright}}
+
+    \vspace{1ex}    
+    \textbf{\large{Тема работы \linebreak \textquotedblleft Аллокаторы памяти \textquotedblright}}
+\end{center}
+\vspace{29ex}
+\begin{flushright}
+	\textit{Студент: } Иванов Андрей Кириллович
+	
+	\vspace{2ex}
+	\textit{Группа: } М8О-208Б-22
+	
+	\vspace{2ex}
+	\textit{Преподаватель: } Миронов Евгений Сергеевич
+	
+	\vspace{2ex}
+	\textit{Вариант: } 20
+	
+	\vspace{2ex}
+	\textit{Оценка: } \underline{\quad\quad\quad\quad\quad\quad}
+	
+	 \vspace{2ex}
+	\textit{Дата: } \underline{\quad\quad\quad\quad\quad\quad}
+	
+	\vspace{2ex}
+	\textit{Подпись: } \underline{\quad\quad\quad\quad\quad\quad}
+	
+\end{flushright}
+
+\vspace{5ex}
+
+\begin{vfill}
+	\begin{center}
+		Москва, 2023
+	\end{center}	
+\end{vfill}
+\newpage
+
+\begingroup
+\color{black}
+\tableofcontents\newpage
+\endgroup
+
+\section{Репозиторий}
+\href{https://github.com/kumaroid/osLabs}{https://github.com/kumaroid/osLabs}
+
+\section{Цель работы}
+\begin{itemize}
+  \item Приобретение практических навыков в использовании знаний, полученных в течении 
+  курса
+  \item Проведение исследования в выбранной предметной области
+\end{itemize}
+
+\section{Задание}
+Необходимо сравнить два алгоритма аллокации: списки свободных блоков (наиболее 
+подходящее) и алгоритм Мак-Кьюзи-Кэрелса
+
+\section{Описание работы программы}
+Каждый аллокатор должен обладать следующим интерфейсом (могут быть отличия в зависимости от 
+особенностей алгоритма):
+
+    > Allocator createMemoryAllocator (void realMemory, size\_t memory\_size) - создание аллокатора памяти размера memory\_size
+
+    > void* alloc(Allocator * allocator, size\_t block\_size) - выделение памяти при помощи аллокатора размера block\_size
+
+    > void* free(Allocator * allocator, void * block) - возвращает выделенную память аллокатору
+
+
+Алгоритм Мак-Кьюзика-Кэрелса:
+
+    Алгоритм подразумевает, что память разбита на набор последовательных страниц, и все буферы, относящиеся к одной странице, должны иметь одинаковый размер (являющийся некоторой степенью числа 2).
+    Каждая страница может находиться в одном из трёх перечисленных состояний.
+
+    •	Быть свободной. 
+
+    •	Быть разбитой на буферы определённого размера.
+
+    •	Являться частью буфера, объединяющего сразу несколько страниц. 
+    
+    
+Список свободных блоков:
+
+Свободные блоки организуем в список. 
+Блок хранит размер и ссылку на следующий свободный блок
+
+Наиболее подходящий участок. Выделение памяти из наиболее подходящей свободной области, имеющей достаточный для удовлетворения запроса объём. Это самый выгодный по памяти алгоритм из всех трёх (первый подходящий участок, наиболее походящий участок, наименее подходящий участок), но он не самый быстрый.
+
+\newpage
+
+\section{Исходный код}
+MCKAllocator.hpp
+\begin{lstlisting}[language=C++]
+#pragma once
+
+#include <exception>
+#include <iostream>
+#include <math.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <unistd.h>
+#include <stdbool.h>
+#include <sys/mman.h>
+
+using void_pointer = void*;
+using size_type = std::size_t;
+using difference_type = std::ptrdiff_t;
+using propagate_on_container_move_assignment = std::true_type;
+using is_always_equal = std::true_type;
+
+
+struct Page {
+    Page* _next;
+    bool _is_large;
+    size_t _block_size;
+};
+
+class MCKAllocator final{
+    private:
+    void* _memory;
+    Page* _free_pages_list;
+    size_t _memory_size;
+    size_t _page_size;
+
+    public:
+    MCKAllocator() = delete;
+    MCKAllocator(void_pointer, size_type);
+
+    virtual ~MCKAllocator();
+
+    void_pointer alloc(size_type);
+    void free(void_pointer);
+};
+\end{lstlisting}
+
+MCKAllocator.cpp
+\begin{lstlisting}[language=C++]
+    #include "MCKAllocator.hpp"
+
+    MCKAllocator::MCKAllocator(void_pointer real_memory, size_type memory_size)
+    {
+        _memory = reinterpret_cast<void*>(reinterpret_cast<int8_t*>(real_memory) + sizeof(MCKAllocator));
+        _free_pages_list = nullptr;
+        _memory_size = memory_size - sizeof(MCKAllocator);
+        _page_size = getpagesize();
+    }
+    
+    MCKAllocator::~MCKAllocator()
+    {
+        Page* cur_page = this->_free_pages_list;
+    
+        while (cur_page) {
+            Page* to_delete = cur_page;
+            cur_page = cur_page->_next;
+            munmap(to_delete, _page_size);
+            to_delete = nullptr;
+        }
+        _free_pages_list = nullptr;
+    }
+    
+    void_pointer MCKAllocator::alloc(size_type new_block_size)
+    {
+        if (_memory_size < new_block_size) return nullptr;
+    
+        size_t rounded_block_size = 1;
+        while (rounded_block_size < new_block_size) {
+            rounded_block_size *= 2;
+        }
+    
+        Page* prev_page = nullptr;
+        Page* cur_page = _free_pages_list;
+    
+        while (cur_page) {
+            if (!cur_page->_is_large && cur_page->_block_size == rounded_block_size) {
+                void_pointer block = reinterpret_cast<void_pointer>(cur_page);
+                _free_pages_list = cur_page->_next;
+                _memory_size -= new_block_size;
+    
+                return block;
+            }
+    
+            prev_page = cur_page;
+            cur_page = cur_page->_next;
+        }
+    
+        if (_memory_size < _page_size) return nullptr;
+    
+        Page* new_page = reinterpret_cast<Page*>(mmap(NULL, _page_size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0));
+                                                    
+        if (new_page == MAP_FAILED) {
+            throw std::bad_alloc();
+        }
+        new_page->_is_large = false;
+        new_page->_block_size = rounded_block_size;
+        new_page->_next = nullptr;
+    
+        size_t num_blocks = _page_size / rounded_block_size;
+        for (size_t i = 0; i != num_blocks; ++i) {
+            Page* block_page = reinterpret_cast<Page*>(reinterpret_cast<int8_t*>(new_page) + i * rounded_block_size);
+            block_page->_is_large = false;
+            block_page->_block_size = rounded_block_size;
+            block_page->_next = this->_free_pages_list;
+            this->_free_pages_list = block_page;
+        }
+    
+        void_pointer block = reinterpret_cast<void_pointer>(new_page);
+        this->_free_pages_list = new_page->_next;
+    
+        return block;
+    }
+    
+    void MCKAllocator::free(void_pointer block)
+    {
+        if (block == nullptr) return;
+    
+        Page* page = reinterpret_cast<Page*>(block);
+        page->_next = _free_pages_list;
+        _free_pages_list = page;
+    }
+\end{lstlisting}
+
+FBLAllocator.hpp
+\begin{lstlisting}[language=C++]
+    #pragma once
+
+    #include <exception>
+    #include <iostream>
+    #include <math.h>
+    #include <stdlib.h>
+    #include <stdio.h>
+    #include <unistd.h>
+    #include <stdbool.h>
+    #include <sys/mman.h>
+    
+    using void_pointer = void*;
+    using size_type = std::size_t;
+    using difference_type = std::ptrdiff_t;
+    using propagate_on_container_move_assignment = std::true_type;
+    using is_always_equal = std::true_type;
+    
+    struct BlockHeader {
+        size_t _size;
+        BlockHeader* _next;
+    };
+    
+    class FBLAllocator final{
+      private:
+        BlockHeader* _free_blocks_list;
+    
+      public:
+        FBLAllocator() = delete;
+        FBLAllocator(void_pointer, size_type);
+    
+        virtual ~FBLAllocator();
+    
+        void_pointer alloc(size_type);
+        void free(void_pointer);
+    };
+\end{lstlisting}
+
+FBLAllocator.cpp
+\begin{lstlisting}[language=C++]
+    #include "FBLAllocator.hpp"
+
+    FBLAllocator::FBLAllocator(void_pointer real_memory, size_type memory_size)
+    {
+        _free_blocks_list = reinterpret_cast<BlockHeader*>(real_memory + sizeof(FBLAllocator));
+        _free_blocks_list->_size = memory_size - sizeof(FBLAllocator) - sizeof(BlockHeader);
+        _free_blocks_list->_next = nullptr;
+    }
+    
+    FBLAllocator::~FBLAllocator()
+    {
+        BlockHeader* cur_block = this->_free_blocks_list;
+    
+        while (cur_block) {
+            BlockHeader* to_delete = cur_block;
+            cur_block = cur_block->_next;
+            to_delete = nullptr;
+        }
+    
+        this->_free_blocks_list = nullptr;
+    }
+    
+    void_pointer FBLAllocator::alloc(size_type new_block_size)
+    {
+        BlockHeader* prev_block = nullptr;
+        BlockHeader* cur_block = this->_free_blocks_list;
+    
+        size_type adjusted_size = new_block_size + sizeof(BlockHeader);
+    
+        int diff = new_block_size * 100;
+    
+        while (cur_block) {
+            if (cur_block->_size >= adjusted_size && cur_block->_size - adjusted_size < diff) {
+                diff = cur_block->_size;
+            }
+            prev_block = cur_block;
+            cur_block = cur_block->_next;
+        }
+    
+        prev_block = nullptr;
+        cur_block = this->_free_blocks_list;
+    
+        while (cur_block) {
+            if (cur_block->_size >= adjusted_size) {
+                if (cur_block->_size >= adjusted_size + sizeof(BlockHeader)) {
+                    BlockHeader* new_block = reinterpret_cast<BlockHeader*>(reinterpret_cast<int8_t*>(cur_block) + adjusted_size);
+    
+                    new_block->_size = cur_block->_size - adjusted_size - sizeof(BlockHeader);
+                    new_block->_next = cur_block->_next;
+                    cur_block->_next = new_block;
+                    cur_block->_size = adjusted_size;
+                }
+    
+                if (prev_block) {
+                    prev_block->_next = cur_block->_next;
+                } else {
+                    this->_free_blocks_list = cur_block->_next;
+                }
+    
+                return reinterpret_cast<int8_t*>(cur_block) + sizeof(BlockHeader);
+            }
+    
+            prev_block = cur_block;
+            cur_block = cur_block->_next;
+        }
+    
+        return nullptr;
+    }
+    
+    void FBLAllocator::free(void_pointer block)
+    {
+        if (block == nullptr) return;
+    
+        BlockHeader* header = reinterpret_cast<BlockHeader*>(static_cast<int8_t*>(block) - sizeof(BlockHeader));
+        header->_next = this->_free_blocks_list;
+        this->_free_blocks_list = header;
+    }
+\end{lstlisting}
+
+main.cpp
+\begin{lstlisting}[language=C++]
+    #include <chrono>
+    #include <cstdlib>
+    #include <vector>
+    
+    #include "MCKAllocator.hpp"
+    #include "FBLAllocator.hpp"
+    
+    size_t page_size = sysconf(_SC_PAGESIZE);
+    
+    int main() {
+    
+        void* list_memory = sbrk(10000 * page_size * 100); 
+        void* MKC_memory = sbrk(10000 * page_size * 100);
+    
+        FBLAllocator list_alloc(list_memory, 10000 * page_size);
+        MCKAllocator MKC_alloc(MKC_memory, 1000 * page_size);
+        std::vector<void*> list_blocks;
+        std::vector<void*> MKC_blocks;
+    
+        std::cout << "Comparing FBLAllocator and MCKAllocator" << std::endl;
+    
+        std::cout << "Block allocation rate" << std::endl;
+        auto start_time = std::chrono::steady_clock::now();
+        for (size_t i = 0; i != 100000; ++i) {
+            void* block = list_alloc.alloc(i % 1000 + 100);
+            list_blocks.push_back(block);
+        }
+        auto end_time = std::chrono::steady_clock::now();
+        std::cout << "Time of alloc FBLAllocator: " << 
+                      std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time).count() << 
+                      " milliseconds" << std::endl;
+    
+        start_time = std::chrono::steady_clock::now();
+        for (size_t i = 0; i != 100000; ++i) {
+            void* block = MKC_alloc.alloc(i % 1000 + 100);
+            MKC_blocks.push_back(block);
+        }
+        end_time = std::chrono::steady_clock::now();
+        std::cout << "Time of alloc MCKAllocator: " << 
+                      std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time).count() << 
+                      " milliseconds" << std::endl;
+    
+        std::cout << "Block free rate" << std::endl;
+        start_time = std::chrono::steady_clock::now();
+        for (size_t i = 0; i != list_blocks.size(); ++i) {
+            list_alloc.free(list_blocks[i]);
+        }
+        end_time = std::chrono::steady_clock::now();
+        std::cout << "Time of free FBLAllocator: " << 
+                      std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time).count() << 
+                      " milliseconds" << std::endl;
+    
+        start_time = std::chrono::steady_clock::now();
+        for (size_t i = 0; i != MKC_blocks.size(); ++i) {
+            MKC_alloc.free(MKC_blocks[i]);
+        }
+        end_time = std::chrono::steady_clock::now();
+    
+        std::cout << "Time of free MCKAllocator: " << 
+                      std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time).count() << 
+                      " milliseconds" << std::endl;
+    
+    
+    //--------
+    
+        std::vector<void*> list_blocks2;
+        std::vector<void*> MKC_blocks2;
+    
+        list_memory = sbrk(10000 * page_size * 100); 
+        MKC_memory = sbrk(10000 * page_size * 100);
+    
+        FBLAllocator list_alloc2(list_memory, 10000 * page_size);
+        MCKAllocator MKC_alloc2(MKC_memory, 1000 * page_size);
+        std::cout << "Block allocation rate of 1000 bytes" << std::endl;
+        start_time = std::chrono::steady_clock::now();
+        for (size_t i = 0; i != 100000; ++i) {
+            void* block = list_alloc2.alloc(1000);
+            list_blocks2.push_back(block);
+        }
+        end_time = std::chrono::steady_clock::now();
+        std::cout << "Time of alloc FBLAllocator: " << 
+                      std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time).count() << 
+                      " milliseconds" << std::endl;
+    
+        start_time = std::chrono::steady_clock::now();
+        for (size_t i = 0; i != 100000; ++i) {
+            void* block = MKC_alloc2.alloc(1000);
+            MKC_blocks2.push_back(block);
+        }
+        end_time = std::chrono::steady_clock::now();
+        std::cout << "Time of alloc MCKAllocator: " << 
+                      std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time).count() << 
+                      " milliseconds" << std::endl;
+    
+        std::cout << "Block free rate" << std::endl;
+        start_time = std::chrono::steady_clock::now();
+        for (size_t i = 0; i != list_blocks.size(); ++i) {
+            list_alloc2.free(list_blocks2[i]);
+        }
+        end_time = std::chrono::steady_clock::now();
+        std::cout << "Time of free FBLAllocator: " << 
+                      std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time).count() << 
+                      " milliseconds" << std::endl;
+    
+        start_time = std::chrono::steady_clock::now();
+        for (size_t i = 0; i != MKC_blocks.size(); ++i) {
+            MKC_alloc2.free(MKC_blocks2[i]);
+        }
+        end_time = std::chrono::steady_clock::now();
+    
+        std::cout << "Time of free MCKAllocator: " << 
+                      std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time).count() << 
+                      " milliseconds" << std::endl;
+    
+    //----------------------------
+    
+        std::vector<void*> list_blocks3;
+        std::vector<void*> MKC_blocks3;
+    
+        list_memory = sbrk(10000 * page_size * 100); 
+        MKC_memory = sbrk(10000 * page_size * 100);
+    
+        FBLAllocator list_alloc3(list_memory, 10000 * page_size);
+        MCKAllocator MKC_alloc3(MKC_memory, 1000 * page_size);
+        std::cout << "Block allocation rate of 3000 bytes" << std::endl;
+        start_time = std::chrono::steady_clock::now();
+        for (size_t i = 0; i != 100000; ++i) {
+            void* block = list_alloc3.alloc(3000);
+            list_blocks3.push_back(block);
+        }
+        end_time = std::chrono::steady_clock::now();
+        std::cout << "Time of alloc FBLAllocator: " << 
+                      std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time).count() << 
+                      " milliseconds" << std::endl;
+    
+        start_time = std::chrono::steady_clock::now();
+        for (size_t i = 0; i != 100000; ++i) {
+            void* block = MKC_alloc3.alloc(3000);
+            MKC_blocks3.push_back(block);
+        }
+        end_time = std::chrono::steady_clock::now();
+        std::cout << "Time of alloc MCKAllocator: " << 
+                      std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time).count() << 
+                      " milliseconds" << std::endl;
+    
+        std::cout << "Block free rate" << std::endl;
+        start_time = std::chrono::steady_clock::now();
+        for (size_t i = 0; i != list_blocks.size(); ++i) {
+            list_alloc3.free(list_blocks3[i]);
+        }
+        end_time = std::chrono::steady_clock::now();
+        std::cout << "Time of free FBLAllocator: " << 
+                      std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time).count() << 
+                      " milliseconds" << std::endl;
+    
+        start_time = std::chrono::steady_clock::now();
+        for (size_t i = 0; i != MKC_blocks.size(); ++i) {
+            MKC_alloc3.free(MKC_blocks3[i]);
+        }
+        end_time = std::chrono::steady_clock::now();
+    
+        std::cout << "Time of free MCKAllocator: " << 
+                      std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time).count() << 
+                      " milliseconds" << std::endl;
+    //-----------------------------------------------------
+        std::vector<void*> list_blocks4;
+        std::vector<void*> MKC_blocks4;
+    
+        list_memory = sbrk(10000 * page_size * 100); 
+        MKC_memory = sbrk(10000 * page_size * 100);
+    
+        FBLAllocator list_alloc4(list_memory, 10000 * page_size);
+        MCKAllocator MKC_alloc4(MKC_memory, 10000 * page_size);
+        std::cout << "Block allocation rate of 1000 bytes" << std::endl;
+        start_time = std::chrono::steady_clock::now();
+        for (size_t i = 0; i != 10000000; ++i) {
+            void* block = list_alloc4.alloc(200);
+            list_blocks4.push_back(block);
+        }
+        end_time = std::chrono::steady_clock::now();
+        std::cout << "Time of alloc FBLAllocator: " << 
+                      std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time).count() << 
+                      " milliseconds" << std::endl;
+    
+        start_time = std::chrono::steady_clock::now();
+        for (size_t i = 0; i != 10000000; ++i) {
+            void* block = MKC_alloc4.alloc(200);
+            MKC_blocks4.push_back(block);
+        }
+        end_time = std::chrono::steady_clock::now();
+        std::cout << "Time of alloc MCKAllocator: " << 
+                      std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time).count() << 
+                      " milliseconds" << std::endl;
+    
+        std::cout << "Block free rate" << std::endl;
+        start_time = std::chrono::steady_clock::now();
+        for (size_t i = 0; i != list_blocks.size(); ++i) {
+            list_alloc4.free(list_blocks4[i]);
+        }
+        end_time = std::chrono::steady_clock::now();
+        std::cout << "Time of free FBLAllocator: " << 
+                      std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time).count() << 
+                      " milliseconds" << std::endl;
+    
+        start_time = std::chrono::steady_clock::now();
+        for (size_t i = 0; i != MKC_blocks.size(); ++i) {
+            MKC_alloc4.free(MKC_blocks4[i]);
+        }
+        end_time = std::chrono::steady_clock::now();
+    
+        std::cout << "Time of free MCKAllocator: " << 
+                      std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time).count() << 
+                      " milliseconds" << std::endl;
+    
+    }
+\end{lstlisting}
+
+\newpage
+\section{Консоль}
+\begin{lstlisting}[language=C++]
+    Comparing FBLAllocator and MCKAllocator
+    Block allocation rate
+    Time of alloc FBLAllocator: 6 milliseconds
+    Time of alloc MCKAllocator: 28 milliseconds
+    Block free rate
+    Time of free FBLAllocator: 0 milliseconds
+    Time of free MCKAllocator: 1 milliseconds
+    Block allocation rate of 1000 bytes
+    Time of alloc FBLAllocator: 8 milliseconds
+    Time of alloc MCKAllocator: 34 milliseconds
+    Block free rate
+    Time of free FBLAllocator: 0 milliseconds
+    Time of free MCKAllocator: 0 milliseconds
+    Block allocation rate of 3000 bytes
+    Time of alloc FBLAllocator: 8 milliseconds
+    Time of alloc MCKAllocator: 34 milliseconds
+    Block free rate
+    Time of free FBLAllocator: 0 milliseconds
+    Time of free MCKAllocator: 0 milliseconds
+    Block allocation rate of 1000 bytes
+    Time of alloc FBLAllocator: 171 milliseconds
+    Time of alloc MCKAllocator: 186 milliseconds
+    Block free rate
+    Time of free FBLAllocator: 1 milliseconds
+    Time of free MCKAllocator: 1 milliseconds
+\end{lstlisting}
+
+\newpage
+\section{Выводы}
+
+В ходе данного курсового проекта были получены практические навыки в использовании знаний,
+полученных в течении курса, а также проведено исследование 2 аллокаторов памяти: 
+список свободных блоков (наиболее подходящее) и алгоритм Мак-Кьюзика-Кэрелса.
+
+Сравнивая эти два способа аллокации памяти, основываясь на времени их работы и 
+на самом принципе работы можно сделать вывод, что метод свободных блоков работает быстрее, чем 
+алгоритм Мак-Кьюзи-Кэрелса, но с ростом количества выделяемых блоков разница в работе алгоритмов становится меньше.
+Также при выделении блоков разного размера методом свободных блоков эти блоки будут хаотично разбросаны по памяти, 
+при работе же алгоритма Мак-Кьюзи-Кэрелса, блоки с одинаковым размером будут расположены друг за другом в области памяти.
+
+\end{document}
