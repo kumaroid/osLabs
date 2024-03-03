@@ -1,0 +1,338 @@
+\documentclass[a4paper, 12pt]{article}
+\usepackage{cmap}
+\usepackage[12pt]{extsizes}			
+\usepackage{mathtext} 				
+\usepackage[T2A]{fontenc}			
+\usepackage[utf8]{inputenc}			
+\usepackage[english,russian]{babel}
+\usepackage{setspace}
+\singlespacing
+\usepackage{amsmath,amsfonts,amssymb,amsthm,mathtools}
+\usepackage{fancyhdr}
+\usepackage{soulutf8}
+\usepackage{euscript}
+\usepackage{mathrsfs}
+\usepackage{listings}
+
+\usepackage[colorlinks=true, urlcolor=blue, linkcolor=black]{hyperref}
+
+\pagestyle{fancy}
+\usepackage{indentfirst}
+\usepackage[top=10mm]{geometry}
+\rhead{}
+\lhead{}
+\renewcommand{\headrulewidth}{0mm}
+\usepackage{tocloft}
+\renewcommand{\cftsecleader}{\cftdotfill{\cftdotsep}}
+\usepackage[dvipsnames]{xcolor}
+
+\lstdefinestyle{mystyle}{ 
+    breaklines=true,
+    numbers=none,
+    basicstyle=\ttfamily\color{black},
+    keywordstyle=\color{black},
+    commentstyle=\color{black},
+    stringstyle=\color{black},
+    identifierstyle=\color{black}
+}
+
+\lstset{style=mystyle}
+
+\begin{document}
+\thispagestyle{empty}	
+\begin{center}
+	Московский авиационный институт
+	
+	(Национальный исследовательский университет)
+	
+	Факультет "Информационные технологии и прикладная математика"
+	
+	Кафедра "Вычислительная математика и программирование"
+	
+\end{center}
+\vspace{40ex}
+\begin{center}
+	\textbf{\large{Лабораторная работа №8 по курсу\linebreak \textquotedblleft Операционные системы\textquotedblright}}
+\end{center}
+\vspace{35ex}
+\begin{flushright}
+	\textit{Студент: } Иванов Андрей Кириллович
+	
+	\vspace{2ex}
+	\textit{Группа: } М8О-208Б-22
+	
+	\vspace{2ex}
+	\textit{Преподаватель: } Миронов Евгений Сергеевич
+	
+	\vspace{2ex}
+	\textit{Оценка: } \underline{\quad\quad\quad\quad\quad\quad}
+	
+	 \vspace{2ex}
+	\textit{Дата: } \underline{\quad\quad\quad\quad\quad\quad}
+	
+	\vspace{2ex}
+	\textit{Подпись: } \underline{\quad\quad\quad\quad\quad\quad}
+	
+\end{flushright}
+
+\vspace{5ex}
+
+\begin{vfill}
+	\begin{center}
+		Москва, 2023
+	\end{center}	
+\end{vfill}
+\newpage
+
+
+\begingroup
+\color{black}
+\tableofcontents\newpage
+\endgroup
+
+\section{Репозиторий}
+\href{https://github.com/kumaroid/osLabs}{https://github.com/kumaroid/osLabs}
+
+\section{Цель работы}
+Приобретение практических навыков диагностики работы программного обеспечения.
+
+\section{Задание}
+Продемонстрировать ключевые 
+системные вызовы, используемые в лабораторной работе и то, что их использование соответствует варианту ЛР на примере лабораторной работы №3.
+
+\section{Описание strace}
+ Команда strace является инструментом диагностики в Linux. Она перехватывает и записывает любые системные вызовы, выполняемые командой. Кроме того, также записывает любой сигнал Linux, отправляемый процессу. Затем мы можем использовать эту информацию для отладки или диагностики программы.
+
+В самом простом варианте strace запускает переданную команду с её аргументами и выводит в стандартный поток ошибок все системные вызовы команды.
+
+Возможные флаги:
+\begin{itemize}
+    \item -k - выводить стек вызовов для отслеживаемого процесса после каждого системного вызова
+    \item -o - выводить всю информацию о системных вызовах не в стандартный поток ошибок, а в файл
+    \item -c - подсчитывать количество ошибок, вызовов и время выполнения для каждого системного вызова
+    \item -T - выводить длительность выполнения системного вызова
+    \item -y - выводить пути для файловых дескрипторов
+    \item -yy - выводить информацию о протоколе для файловых дескрипторов
+    \item -p - указывает pid процесса, к которому следует подключиться
+    \item -f - отслеживать дочерние процессы
+\end {itemize}
+
+
+\newpage
+\section{Демонстрация работы}
+\begin{lstlisting}
+andrew@DESKTOP-K3DH39N:~/MAI/osLabs/build/lab3$ strace -f ./lab3
+execve("./lab3", ["./lab3"], 0x7fffcfeccae8 /* 30 vars */) = 0
+brk(NULL)                               = 0x5581dd298000
+arch\_prctl(0x3001 /* ARCH\_??? */, 0x7ffe4fc30af0) = -1 EINVAL (Invalid argument)
+mmap(NULL, 8192, PROT\_READ|PROT\_WRITE, MAP\_PRIVATE|MAP\_ANONYMOUS, -1, 0) = 0x7f73514af000
+access("/etc/ld.so.preload", R\_OK)      = -1 ENOENT (No such file or directory)
+openat(AT\_FDCWD, "/etc/ld.so.cache", O\_RDONLY|O\_CLOEXEC) = 3
+newfstatat(3, "", {st\_mode=S\_IFREG|0644, st\_size=38295, ...}, AT\_EMPTY\_PATH) = 0
+mmap(NULL, 38295, PROT\_READ, MAP\_PRIVATE, 3, 0) = 0x7f73514a5000
+close(3)                                = 0
+openat(AT\_FDCWD, "/lib/x86\_64-linux-gnu/libstdc++.so.6", O\_RDONLY|O\_CLOEXEC) = 3
+read(3, "\177ELF\2\1\1\3\0\0\0\0\0\0\0\0\3\0>\0\1\0\0\0\0\0\0\0\0\0\0\0"..., 832) = 832
+newfstatat(3, "", {st\_mode=S\_IFREG|0644, st\_size=2260296, ...}, AT\_EMPTY\_PATH) = 0
+mmap(NULL, 2275520, PROT\_READ, MAP\_PRIVATE|MAP\_DENYWRITE, 3, 0) = 0x7f7351279000
+mprotect(0x7f7351313000, 1576960, PROT\_NONE) = 0
+mmap(0x7f7351313000, 1118208, PROT\_READ|PROT\_EXEC, MAP\_PRIVATE|MAP\_FIXED|MAP\_DENYWRITE, 3, 0x9a000) = 0x7f7351313000
+mmap(0x7f7351424000, 454656, PROT\_READ, MAP\_PRIVATE|MAP\_FIXED|MAP\_DENYWRITE, 3, 0x1ab000) = 0x7f7351424000
+mmap(0x7f7351494000, 57344, PROT\_READ|PROT\_WRITE, MAP\_PRIVATE|MAP\_FIXED|MAP\_DENYWRITE, 3, 0x21a000) = 0x7f7351494000
+mmap(0x7f73514a2000, 10432, PROT\_READ|PROT\_WRITE, MAP\_PRIVATE|MAP\_FIXED|MAP\_ANONYMOUS, -1, 0) = 0x7f73514a2000
+close(3)                                = 0
+openat(AT\_FDCWD, "/lib/x86\_64-linux-gnu/libgcc\_s.so.1", O\_RDONLY|O\_CLOEXEC) = 3
+read(3, "\177ELF\2\1\1\0\0\0\0\0\0\0\0\0\3\0>\0\1\0\0\0\0\0\0\0\0\0\0\0"..., 832) = 832
+newfstatat(3, "", {st\_mode=S\_IFREG|0644, st\_size=125488, ...}, AT\_EMPTY\_PATH) = 0
+mmap(NULL, 127720, PROT\_READ, MAP\_PRIVATE|MAP\_DENYWRITE, 3, 0) = 0x7f7351259000
+mmap(0x7f735125c000, 94208, PROT\_READ|PROT\_EXEC, MAP\_PRIVATE|MAP\_FIXED|MAP\_DENYWRITE, 3, 0x3000) = 0x7f735125c000
+mmap(0x7f7351273000, 16384, PROT\_READ, MAP\_PRIVATE|MAP\_FIXED|MAP\_DENYWRITE, 3, 0x1a000) = 0x7f7351273000
+mmap(0x7f7351277000, 8192, PROT\_READ|PROT\_WRITE, MAP\_PRIVATE|MAP\_FIXED|MAP\_DENYWRITE, 3, 0x1d000) = 0x7f7351277000
+close(3)                                = 0
+openat(AT\_FDCWD, "/lib/x86\_64-linux-gnu/libc.so.6", O\_RDONLY|O\_CLOEXEC) = 3
+read(3, "\177ELF\2\1\1\3\0\0\0\0\0\0\0\0\3\0>\0\1\0\0\0P\237\2\0\0\0\0\0"..., 832) = 832
+pread64(3, "\6\0\0\0\4\0\0\0@\0\0\0\0\0\0\0@\0\0\0\0\0\0\0@\0\0\0\0\0\0\0"..., 784, 64) = 784
+pread64(3, "\4\0\0\0 \0\0\0\5\0\0\0GNU\0\2\0\0\300\4\0\0\0\3\0\0\0\0\0\0\0"..., 48, 848) = 48
+pread64(3, "\4\0\0\0\24\0\0\0\3\0\0\0GNU\0 =\340\2563\265?\356\25x\261\27\313A#\350"..., 68, 896) = 68
+newfstatat(3, "", {st\_mode=S\_IFREG|0755, st\_size=2216304, ...}, AT\_EMPTY\_PATH) = 0
+pread64(3, "\6\0\0\0\4\0\0\0@\0\0\0\0\0\0\0@\0\0\0\0\0\0\0@\0\0\0\0\0\0\0"..., 784, 64) = 784
+mmap(NULL, 2260560, PROT\_READ, MAP\_PRIVATE|MAP\_DENYWRITE, 3, 0) = 0x7f7351031000
+mmap(0x7f7351059000, 1658880, PROT\_READ|PROT\_EXEC, MAP\_PRIVATE|MAP\_FIXED|MAP\_DENYWRITE, 3, 0x28000) = 0x7f7351059000
+mmap(0x7f73511ee000, 360448, PROT\_READ, MAP\_PRIVATE|MAP\_FIXED|MAP\_DENYWRITE, 3, 0x1bd000) = 0x7f73511ee000
+mmap(0x7f7351246000, 24576, PROT\_READ|PROT\_WRITE, MAP\_PRIVATE|MAP\_FIXED|MAP\_DENYWRITE, 3, 0x214000) = 0x7f7351246000
+mmap(0x7f735124c000, 52816, PROT\_READ|PROT\_WRITE, MAP\_PRIVATE|MAP\_FIXED|MAP\_ANONYMOUS, -1, 0) = 0x7f735124c000
+close(3)                                = 0
+openat(AT\_FDCWD, "/lib/x86\_64-linux-gnu/libm.so.6", O\_RDONLY|O\_CLOEXEC) = 3
+read(3, "\177ELF\2\1\1\3\0\0\0\0\0\0\0\0\3\0>\0\1\0\0\0\0\0\0\0\0\0\0\0"..., 832) = 832
+newfstatat(3, "", {st\_mode=S\_IFREG|0644, st\_size=940560, ...}, AT\_EMPTY\_PATH) = 0
+mmap(NULL, 942344, PROT\_READ, MAP\_PRIVATE|MAP\_DENYWRITE, 3, 0) = 0x7f7350f4a000
+mmap(0x7f7350f58000, 507904, PROT\_READ|PROT\_EXEC, MAP\_PRIVATE|MAP\_FIXED|MAP\_DENYWRITE, 3, 0xe000) = 0x7f7350f58000
+mmap(0x7f7350fd4000, 372736, PROT\_READ, MAP\_PRIVATE|MAP\_FIXED|MAP\_DENYWRITE, 3, 0x8a000) = 0x7f7350fd4000
+mmap(0x7f735102f000, 8192, PROT\_READ|PROT\_WRITE, MAP\_PRIVATE|MAP\_FIXED|MAP\_DENYWRITE, 3, 0xe4000) = 0x7f735102f000
+close(3)                                = 0
+mmap(NULL, 8192, PROT\_READ|PROT\_WRITE, MAP\_PRIVATE|MAP\_ANONYMOUS, -1, 0) = 0x7f7350f48000
+arch\_prctl(ARCH\_SET\_FS, 0x7f7350f493c0) = 0
+set\_tid\_address(0x7f7350f49690)         = 211529
+set\_robust\_list(0x7f7350f496a0, 24)     = 0
+rseq(0x7f7350f49d60, 0x20, 0, 0x53053053) = 0
+mprotect(0x7f7351246000, 16384, PROT\_READ) = 0
+mprotect(0x7f735102f000, 4096, PROT\_READ) = 0
+mprotect(0x7f7351277000, 4096, PROT\_READ) = 0
+mmap(NULL, 8192, PROT\_READ|PROT\_WRITE, MAP\_PRIVATE|MAP\_ANONYMOUS, -1, 0) = 0x7f7350f46000
+mprotect(0x7f7351494000, 45056, PROT\_READ) = 0
+mprotect(0x5581db3f1000, 4096, PROT\_READ) = 0
+mprotect(0x7f73514e9000, 8192, PROT\_READ) = 0
+prlimit64(0, RLIMIT\_STACK, NULL, {rlim\_cur=8192*1024, rlim\_max=RLIM64\_INFINITY}) = 0
+munmap(0x7f73514a5000, 38295)           = 0
+getrandom("\x38\x03\x21\x4a\x8e\xae\xbd\x9f", 8, GRND\_NONBLOCK) = 8
+brk(NULL)                               = 0x5581dd298000
+brk(0x5581dd2b9000)                     = 0x5581dd2b9000
+futex(0x7f73514a277c, FUTEX\_WAKE\_PRIVATE, 2147483647) = 0
+openat(AT\_FDCWD, "/dev/shm/sem.SEM\_1", O\_RDWR|O\_NOFOLLOW) = 3
+newfstatat(3, "", {st\_mode=S\_IFREG|0600, st\_size=32, ...}, AT\_EMPTY\_PATH) = 0
+mmap(NULL, 32, PROT\_READ|PROT\_WRITE, MAP\_SHARED, 3, 0) = 0x7f73514e8000
+close(3)                                = 0
+openat(AT\_FDCWD, "/dev/shm/shm1", O\_RDWR|O\_CREAT|O\_NOFOLLOW|O\_CLOEXEC, 0600) = 3
+ftruncate(3, 1024)                      = 0
+mmap(NULL, 1024, PROT\_READ|PROT\_WRITE, MAP\_SHARED, 3, 0) = 0x7f73514ae000
+openat(AT\_FDCWD, "/dev/shm/sem.SEM\_2", O\_RDWR|O\_NOFOLLOW) = 4
+newfstatat(4, "", {st\_mode=S\_IFREG|0600, st\_size=32, ...}, AT\_EMPTY\_PATH) = 0
+mmap(NULL, 32, PROT\_READ|PROT\_WRITE, MAP\_SHARED, 4, 0) = 0x7f73514ad000
+close(4)                                = 0
+openat(AT\_FDCWD, "/dev/shm/shm2", O\_RDWR|O\_CREAT|O\_NOFOLLOW|O\_CLOEXEC, 0600) = 4
+ftruncate(4, 1024)                      = 0
+mmap(NULL, 1024, PROT\_READ|PROT\_WRITE, MAP\_SHARED, 4, 0) = 0x7f73514ac000
+openat(AT\_FDCWD, "/dev/shm/sem.SEM\_3", O\_RDWR|O\_NOFOLLOW) = 5
+newfstatat(5, "", {st\_mode=S\_IFREG|0600, st\_size=32, ...}, AT\_EMPTY\_PATH) = 0
+mmap(NULL, 32, PROT\_READ|PROT\_WRITE, MAP\_SHARED, 5, 0) = 0x7f73514ab000
+close(5)                                = 0
+openat(AT\_FDCWD, "/dev/shm/shm3", O\_RDWR|O\_CREAT|O\_NOFOLLOW|O\_CLOEXEC, 0600) = 5
+ftruncate(5, 1024)                      = 0
+mmap(NULL, 1024, PROT\_READ|PROT\_WRITE, MAP\_SHARED, 5, 0) = 0x7f73514aa000
+clone(child\_stack=NULL, flags=CLONE\_CHILD\_CLEARTID|CLONE\_CHILD\_SETTID|SIGCHLDstrace: Process 211530 attached
+, child\_tidptr=0x7f7350f49690) = 211530
+[pid 211530] set\_robust\_list(0x7f7350f496a0, 24 <unfinished ...>
+[pid 211529] clone(child\_stack=NULL, flags=CLONE\_CHILD\_CLEARTID|CLONE\_CHILD\_SETTID|SIGCHLD <unfinished ...>
+[pid 211530] <... set\_robust\_list resumed>) = 0
+strace: Process 211531 attached
+[pid 211529] <... clone resumed>, child\_tidptr=0x7f7350f49690) = 211531
+[pid 211530] execve("/home/roman/MAI/MAI\_OS\_labs/build/lab3/underscore.out", ["lower.out", "/shm1", "/shm2"], 0x7ffe4fc30cc8 /* 30 vars */ <unfinished ...>
+[pid 211529] newfstatat(0, "",  <unfinished ...>
+[pid 211531] set\_robust\_list(0x7f7350f496a0, 24 <unfinished ...>
+[pid 211529] <... newfstatat resumed>{st\_mode=S\_IFCHR|0620, st\_rdev=makedev(0x88, 0x3), ...}, AT\_EMPTY\_PATH) = 0
+[pid 211531] <... set\_robust\_list resumed>) = 0
+[pid 211529] read(0,  <unfinished ...>
+[pid 211531] --- SIGSEGV {si\_signo=SIGSEGV, si\_code=SEGV\_MAPERR, si\_addr=NULL} ---
+[pid 211530] <... execve resumed>)      = 0
+[pid 211530] brk(NULL <unfinished ...>
+[pid 211531] +++ killed by SIGSEGV +++
+[pid 211530] <... brk resumed>)         = 0x56183b245000
+[pid 211529] <... read resumed>0x5581dd2a9fa0, 1024) = ? ERESTARTSYS (To be restarted if SA\_RESTART is set)
+[pid 211529] --- SIGCHLD {si\_signo=SIGCHLD, si\_code=CLD\_KILLED, si\_pid=211531, si\_uid=1000, si\_status=SIGSEGV, si\_utime=0, si\_stime=0} ---
+[pid 211530] arch\_prctl(0x3001 /* ARCH\_??? */, 0x7ffc1a428050 <unfinished ...>
+[pid 211529] read(0,  <unfinished ...>
+[pid 211530] <... arch\_prctl resumed>)  = -1 EINVAL (Invalid argument)
+[pid 211530] mmap(NULL, 8192, PROT\_READ|PROT\_WRITE, MAP\_PRIVATE|MAP\_ANONYMOUS, -1, 0) = 0x7f2da6dd1000
+[pid 211530] access("/etc/ld.so.preload", R\_OK) = -1 ENOENT (No such file or directory)
+[pid 211530] openat(AT\_FDCWD, "/etc/ld.so.cache", O\_RDONLY|O\_CLOEXEC) = 3
+[pid 211530] newfstatat(3, "", {st\_mode=S\_IFREG|0644, st\_size=38295, ...}, AT\_EMPTY\_PATH) = 0
+[pid 211530] mmap(NULL, 38295, PROT\_READ, MAP\_PRIVATE, 3, 0) = 0x7f2da6dc7000
+[pid 211530] close(3)                   = 0
+[pid 211530] openat(AT\_FDCWD, "/lib/x86\_64-linux-gnu/libstdc++.so.6", O\_RDONLY|O\_CLOEXEC) = 3
+[pid 211530] read(3, "\177ELF\2\1\1\3\0\0\0\0\0\0\0\0\3\0>\0\1\0\0\0\0\0\0\0\0\0\0\0"..., 832) = 832
+[pid 211530] newfstatat(3, "", {st\_mode=S\_IFREG|0644, st\_size=2260296, ...}, AT\_EMPTY\_PATH) = 0
+[pid 211530] mmap(NULL, 2275520, PROT\_READ, MAP\_PRIVATE|MAP\_DENYWRITE, 3, 0) = 0x7f2da6b9b000
+[pid 211530] mprotect(0x7f2da6c35000, 1576960, PROT\_NONE) = 0
+[pid 211530] mmap(0x7f2da6c35000, 1118208, PROT\_READ|PROT\_EXEC, MAP\_PRIVATE|MAP\_FIXED|MAP\_DENYWRITE, 3, 0x9a000) = 0x7f2da6c35000
+[pid 211530] mmap(0x7f2da6d46000, 454656, PROT\_READ, MAP\_PRIVATE|MAP\_FIXED|MAP\_DENYWRITE, 3, 0x1ab000) = 0x7f2da6d46000
+[pid 211530] mmap(0x7f2da6db6000, 57344, PROT\_READ|PROT\_WRITE, MAP\_PRIVATE|MAP\_FIXED|MAP\_DENYWRITE, 3, 0x21a000) = 0x7f2da6db6000
+[pid 211530] mmap(0x7f2da6dc4000, 10432, PROT\_READ|PROT\_WRITE, MAP\_PRIVATE|MAP\_FIXED|MAP\_ANONYMOUS, -1, 0) = 0x7f2da6dc4000
+[pid 211530] close(3)                   = 0
+[pid 211530] openat(AT\_FDCWD, "/lib/x86\_64-linux-gnu/libgcc\_s.so.1", O\_RDONLY|O\_CLOEXEC) = 3
+[pid 211530] read(3, "\177ELF\2\1\1\0\0\0\0\0\0\0\0\0\3\0>\0\1\0\0\0\0\0\0\0\0\0\0\0"..., 832) = 832
+[pid 211530] newfstatat(3, "", {st\_mode=S\_IFREG|0644, st\_size=125488, ...}, AT\_EMPTY\_PATH) = 0
+[pid 211530] mmap(NULL, 127720, PROT\_READ, MAP\_PRIVATE|MAP\_DENYWRITE, 3, 0) = 0x7f2da6b7b000
+[pid 211530] mmap(0x7f2da6b7e000, 94208, PROT\_READ|PROT\_EXEC, MAP\_PRIVATE|MAP\_FIXED|MAP\_DENYWRITE, 3, 0x3000) = 0x7f2da6b7e000
+[pid 211530] mmap(0x7f2da6b95000, 16384, PROT\_READ, MAP\_PRIVATE|MAP\_FIXED|MAP\_DENYWRITE, 3, 0x1a000) = 0x7f2da6b95000
+[pid 211530] mmap(0x7f2da6b99000, 8192, PROT\_READ|PROT\_WRITE, MAP\_PRIVATE|MAP\_FIXED|MAP\_DENYWRITE, 3, 0x1d000) = 0x7f2da6b99000
+[pid 211530] close(3)                   = 0
+[pid 211530] openat(AT\_FDCWD, "/lib/x86\_64-linux-gnu/libc.so.6", O\_RDONLY|O\_CLOEXEC) = 3
+[pid 211530] read(3, "\177ELF\2\1\1\3\0\0\0\0\0\0\0\0\3\0>\0\1\0\0\0P\237\2\0\0\0\0\0"..., 832) = 832
+[pid 211530] pread64(3, "\6\0\0\0\4\0\0\0@\0\0\0\0\0\0\0@\0\0\0\0\0\0\0@\0\0\0\0\0\0\0"..., 784, 64) = 784
+[pid 211530] pread64(3, "\4\0\0\0 \0\0\0\5\0\0\0GNU\0\2\0\0\300\4\0\0\0\3\0\0\0\0\0\0\0"..., 48, 848) = 48
+[pid 211530] pread64(3, "\4\0\0\0\24\0\0\0\3\0\0\0GNU\0 =\340\2563\265?\356\25x\261\27\313A#\350"..., 68, 896) = 68
+[pid 211530] newfstatat(3, "", {st\_mode=S\_IFREG|0755, st\_size=2216304, ...}, AT\_EMPTY\_PATH) = 0
+[pid 211530] pread64(3, "\6\0\0\0\4\0\0\0@\0\0\0\0\0\0\0@\0\0\0\0\0\0\0@\0\0\0\0\0\0\0"..., 784, 64) = 784
+[pid 211530] mmap(NULL, 2260560, PROT\_READ, MAP\_PRIVATE|MAP\_DENYWRITE, 3, 0) = 0x7f2da6953000
+[pid 211530] mmap(0x7f2da697b000, 1658880, PROT\_READ|PROT\_EXEC, MAP\_PRIVATE|MAP\_FIXED|MAP\_DENYWRITE, 3, 0x28000) = 0x7f2da697b000
+[pid 211530] mmap(0x7f2da6b10000, 360448, PROT\_READ, MAP\_PRIVATE|MAP\_FIXED|MAP\_DENYWRITE, 3, 0x1bd000) = 0x7f2da6b10000
+[pid 211530] mmap(0x7f2da6b68000, 24576, PROT\_READ|PROT\_WRITE, MAP\_PRIVATE|MAP\_FIXED|MAP\_DENYWRITE, 3, 0x214000) = 0x7f2da6b68000
+[pid 211530] mmap(0x7f2da6b6e000, 52816, PROT\_READ|PROT\_WRITE, MAP\_PRIVATE|MAP\_FIXED|MAP\_ANONYMOUS, -1, 0) = 0x7f2da6b6e000
+[pid 211530] close(3)                   = 0
+[pid 211530] openat(AT\_FDCWD, "/lib/x86\_64-linux-gnu/libm.so.6", O\_RDONLY|O\_CLOEXEC) = 3
+[pid 211530] read(3, "\177ELF\2\1\1\3\0\0\0\0\0\0\0\0\3\0>\0\1\0\0\0\0\0\0\0\0\0\0\0"..., 832) = 832
+[pid 211530] newfstatat(3, "", {st\_mode=S\_IFREG|0644, st\_size=940560, ...}, AT\_EMPTY\_PATH) = 0
+[pid 211530] mmap(NULL, 942344, PROT\_READ, MAP\_PRIVATE|MAP\_DENYWRITE, 3, 0) = 0x7f2da686c000
+[pid 211530] mmap(0x7f2da687a000, 507904, PROT\_READ|PROT\_EXEC, MAP\_PRIVATE|MAP\_FIXED|MAP\_DENYWRITE, 3, 0xe000) = 0x7f2da687a000
+[pid 211530] mmap(0x7f2da68f6000, 372736, PROT\_READ, MAP\_PRIVATE|MAP\_FIXED|MAP\_DENYWRITE, 3, 0x8a000) = 0x7f2da68f6000
+[pid 211530] mmap(0x7f2da6951000, 8192, PROT\_READ|PROT\_WRITE, MAP\_PRIVATE|MAP\_FIXED|MAP\_DENYWRITE, 3, 0xe4000) = 0x7f2da6951000
+[pid 211530] close(3)                   = 0
+[pid 211530] mmap(NULL, 8192, PROT\_READ|PROT\_WRITE, MAP\_PRIVATE|MAP\_ANONYMOUS, -1, 0) = 0x7f2da686a000
+[pid 211530] arch\_prctl(ARCH\_SET\_FS, 0x7f2da686b3c0) = 0
+[pid 211530] set\_tid\_address(0x7f2da686b690) = 211530
+[pid 211530] set\_robust\_list(0x7f2da686b6a0, 24) = 0
+[pid 211530] rseq(0x7f2da686bd60, 0x20, 0, 0x53053053) = 0
+[pid 211530] mprotect(0x7f2da6b68000, 16384, PROT\_READ) = 0
+[pid 211530] mprotect(0x7f2da6951000, 4096, PROT\_READ) = 0
+[pid 211530] mprotect(0x7f2da6b99000, 4096, PROT\_READ) = 0
+[pid 211530] mmap(NULL, 8192, PROT\_READ|PROT\_WRITE, MAP\_PRIVATE|MAP\_ANONYMOUS, -1, 0) = 0x7f2da6868000
+[pid 211530] mprotect(0x7f2da6db6000, 45056, PROT\_READ) = 0
+[pid 211530] mprotect(0x56183acf4000, 4096, PROT\_READ) = 0
+[pid 211530] mprotect(0x7f2da6e0b000, 8192, PROT\_READ) = 0
+[pid 211530] prlimit64(0, RLIMIT\_STACK, NULL, {rlim\_cur=8192*1024, rlim\_max=RLIM64\_INFINITY}) = 0
+[pid 211530] munmap(0x7f2da6dc7000, 38295) = 0
+[pid 211530] getrandom("\xce\xae\x9d\xa7\x22\x12\x7d\x80", 8, GRND\_NONBLOCK) = 8
+[pid 211530] brk(NULL)                  = 0x56183b245000
+[pid 211530] brk(0x56183b266000)        = 0x56183b266000
+[pid 211530] futex(0x7f2da6dc477c, FUTEX\_WAKE\_PRIVATE, 2147483647) = 0
+[pid 211530] openat(AT\_FDCWD, "/dev/shm/sem.SEM\_2", O\_RDWR|O\_NOFOLLOW) = 3
+[pid 211530] newfstatat(3, "", {st\_mode=S\_IFREG|0600, st\_size=32, ...}, AT\_EMPTY\_PATH) = 0
+[pid 211530] mmap(NULL, 32, PROT\_READ|PROT\_WRITE, MAP\_SHARED, 3, 0) = 0x7f2da6e0a000
+[pid 211530] close(3)                   = 0
+[pid 211530] openat(AT\_FDCWD, "/dev/shm/shm1", O\_RDWR|O\_CREAT|O\_NOFOLLOW|O\_CLOEXEC, 0600) = 3
+[pid 211530] ftruncate(3, 1024)         = 0
+[pid 211530] mmap(NULL, 1024, PROT\_READ|PROT\_WRITE, MAP\_SHARED, 3, 0) = 0x7f2da6dd0000
+[pid 211530] openat(AT\_FDCWD, "/dev/shm/sem.SEM\_3", O\_RDWR|O\_NOFOLLOW) = 4
+[pid 211530] newfstatat(4, "", {st\_mode=S\_IFREG|0600, st\_size=32, ...}, AT\_EMPTY\_PATH) = 0
+[pid 211530] mmap(NULL, 32, PROT\_READ|PROT\_WRITE, MAP\_SHARED, 4, 0) = 0x7f2da6dcf000
+[pid 211530] close(4)                   = 0
+[pid 211530] openat(AT\_FDCWD, "/dev/shm/shm2", O\_RDWR|O\_CREAT|O\_NOFOLLOW|O\_CLOEXEC, 0600) = 4
+[pid 211530] ftruncate(4, 1024)         = 0
+[pid 211530] mmap(NULL, 1024, PROT\_READ|PROT\_WRITE, MAP\_SHARED, 4, 0) = 0x7f2da6dce000
+[pid 211530] futex(0x7f2da6e0a000, FUTEX\_WAIT\_BITSET|FUTEX\_CLOCK\_REALTIME, 0, NULL, FUTEX\_BITSET\_MATCH\_ANY
+\end{lstlisting}
+
+
+\begin{enumerate}
+    \item execve("./lab3", ["./lab3"], 0x7fffcfeccae8 /* 30 vars */) = 0: Этот вызов execve, который выполняет программу lab3. Значение 0 означает успешное выполнение.
+    \item brk(NULL)                               = 0x5581dd298000: Этот вызов brk используется для расширения размера кучи программы. Здесь он устанавливает верхний предел кучи на адрес 0x56197b5bd000.
+    \item openat(AT\_FDCWD, "/etc/ld.so.cache", O\_RDONLY|O\_CLOEXEC) = 3: Этот вызов открывает файл /etc/ld.so.cache для чтения. Данный файл содержит кэш динамически загружаемых библиотек, которые используются для быстрого поиска библиотек при выполнении программ.
+    \item newfstatat(3, "", {st\_mode=S\_IFREG|0644, st\_size=38295, ...}, AT\_EMPTY\_PATH) = 0:
+    Этот вызов получает информацию о файле, который открыт дескриптором 3.
+    \item mmap(NULL, 8192, PROT\_READ|PROT\_WRITE, MAP\_PRIVATE|MAP\_ANONYMOUS, -1, 0) = 0x7f73514af000: 
+    Выделение памяти с использованием системного вызова mmap. Этот вызов создает отображение виртуальной памяти для чтения (PROT\_READ) размером 239963 байт, начиная с адреса 0x7f34fc57e000. Отображение является частным и открыто только для чтения. Файловый дескриптор 3 указывает на файл, откуда происходит отображение.
+    \item close(3) = 0: Этот вызов закрывает файловый дескриптор 3 (который был использован для ld.so.cache).
+    \item read(3, "..."..., 832) = 832:
+    Чтение 832 битов из файла /lib/x86\_64-linux-gnu/librt.so.1
+    \item arch\_prctl(0x3001 /* ARCH\_??? */, 0x7ffe4fc30af0) = -1 EINVAL (Invalid argument): Задаёт состояние процесса.
+    \item mprotect(0x7f7351313000, 1576960, PROT\_NONE) = 0: Этот вызов изменяет права доступа к памяти. Здесь он делает доступной для чтения область памяти, начинающуюся с адреса 0x7f34fc348000 и имеющую размер 16384 байта.
+    \item munmap(0x7f73514a5000, 38295)           = 0: Снимает отражение файла или устройства в памяти.
+    \item set\_tid\_address(0x7f7350f49690)         = 211529: Этот вызов устанавливает адрес переменной в адресное пространство потока.
+    \item prlimit64(0, RLIMIT\_STACK, NULL, {rlim\_cur=8192*1024, rlim\_max=RLIM64\_INFINITY}) = 0: Этот вызов изменяет ограничения ресурсов процесса. Здесь он изменяет текущий размер стека в 8192*1024 байт и максимальный размер стека в бесконечность.
+\end{enumerate}
+
+\newpage
+\section{Выводы}
+
+В результате выполнения данной лабораторной работы было изучено средство диагностики strace, с помощью которого можно отследить системные вызовы, выполняемые программой. Были получены практические навыки диагностики работы программного обеспечения.
+\end{document}
