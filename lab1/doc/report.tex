@@ -1,0 +1,456 @@
+\documentclass[a4paper, 12pt]{article}
+\usepackage{cmap}
+\usepackage[12pt]{extsizes}			
+\usepackage{mathtext} 				
+\usepackage[T2A]{fontenc}			
+\usepackage[utf8]{inputenc}			
+\usepackage[english,russian]{babel}
+\usepackage{setspace}
+\singlespacing
+\usepackage{amsmath,amsfonts,amssymb,amsthm,mathtools}
+\usepackage{fancyhdr}
+\usepackage{soulutf8}
+\usepackage{euscript}
+\usepackage{mathrsfs}
+\usepackage{listings}
+
+\usepackage[colorlinks=true, urlcolor=blue, linkcolor=black]{hyperref}
+
+\pagestyle{fancy}
+\usepackage{indentfirst}
+\usepackage[top=10mm]{geometry}
+\rhead{}
+\lhead{}
+\renewcommand{\headrulewidth}{0mm}
+\usepackage{tocloft}
+\renewcommand{\cftsecleader}{\cftdotfill{\cftdotsep}}
+\usepackage[dvipsnames]{xcolor}
+
+\lstdefinestyle{mystyle}{ 
+	keywordstyle=\color{OliveGreen},
+	numberstyle=\tiny\color{Gray},
+	stringstyle=\color{BurntOrange},
+	basicstyle=\ttfamily\footnotesize,
+	breakatwhitespace=false,         
+	breaklines=true,                 
+	captionpos=b,                    
+	keepspaces=true,                 
+	numbers=left,                    
+	numbersep=5pt,                  
+	showspaces=false,                
+	showstringspaces=false,
+	showtabs=false,                  
+	tabsize=2
+}
+
+\lstset{style=mystyle}
+
+\begin{document}
+\thispagestyle{empty}	
+\begin{center}
+	Московский авиационный институт
+	
+	(Национальный исследовательский университет)
+	
+	Факультет "Информационные технологии и прикладная математика"
+	
+	Кафедра "Вычислительная математика и программирование"
+	
+\end{center}
+\vspace{40ex}
+\begin{center}
+	\textbf{\large{Лабораторная работа №1 по курсу\linebreak \textquotedblleft Операционные системы\textquotedblright}}
+\end{center}
+\vspace{35ex}
+\begin{flushright}
+	\textit{Студент: } Иванов Андрей Кириллович
+	
+	\vspace{2ex}
+	\textit{Группа: } М8О-208Б-22
+	
+	\vspace{2ex}
+	\textit{Преподаватель: } Миронов Евгений Сергеевич
+	
+	\vspace{2ex}
+	\textit{Вариант: } 13
+	
+	\vspace{2ex}
+	\textit{Оценка: } \underline{\quad\quad\quad\quad\quad\quad}
+	
+	 \vspace{2ex}
+	\textit{Дата: } \underline{\quad\quad\quad\quad\quad\quad}
+	
+	\vspace{2ex}
+	\textit{Подпись: } \underline{\quad\quad\quad\quad\quad\quad}
+	
+\end{flushright}
+
+\vspace{5ex}
+
+\begin{vfill}
+	\begin{center}
+		Москва, 2023
+	\end{center}	
+\end{vfill}
+\newpage
+
+
+\begingroup
+\color{black}
+\tableofcontents\newpage
+\endgroup
+
+\section{Репозиторий}
+\href{https://github.com/kumaroid/osLabs}{https://github.com/kumaroid/osLabs}
+
+\section{Цель работы}
+Приобретение практических навыков в:
+\begin{itemize}
+  \item Управлении процессами в ОС
+  \item Обеспечении обмена данных между процессами посредством каналов
+\end{itemize}
+
+\section{Задание}
+Составить и отладить программу на языке Си, осуществляющую работу с процессами и 
+взаимодействие между ними в одной из двух операционных систем. В результате работы 
+программа (основной процесс) должен создать для решение задачи один или несколько 
+дочерних процессов. Взаимодействие между процессами осуществляется через системные 
+сигналы/события и/или каналы (pipe).
+Необходимо обрабатывать системные ошибки, которые могут возникнуть в результате работы.
+
+\section{Описание работы программы}
+Родительский процесс создает два дочерних процесса. Перенаправление стандартных потоков
+ввода-вывода показано на картинке выше. Child1 и Child2 можно «соединить» между собой
+дополнительным каналом. Родительский и дочерний процесс должны быть представлены
+разными программами.
+Родительский процесс принимает от пользователя строки произвольной длины и пересылает их в
+pipe1. Процесс child1 и child2 производят работу над строками. Child2 пересылает результат своей
+работы родительскому процессу. Родительский процесс полученный результат выводит в
+стандартный поток вывода.
+
+В ходе выполнения лабораторной работы я использовал следующие системные вызовы:
+\begin{itemize}
+  \item fork() - создание нового процесса
+  \item pipe() - создание канала
+  \item dup2() - создание копии файлового дескриптора, используя для нового дескриптора самый маленький свободный номер файлового дескриптора.
+  \item execlp() - запуск файла на исполнение
+\end{itemize}
+
+
+\newpage
+
+\section{Исходный код}
+parent.hpp
+\begin{lstlisting}[language=C++]
+#pragma once
+
+#include <iostream>
+#include <fstream>
+#include <string>
+#include <sys/wait.h>
+#include <unistd.h>
+
+int ParentWork();
+void CreatePipe(int *fd);
+int CreateFork();
+void DoClose(int fd);
+\end{lstlisting}
+
+parent.cpp
+\begin{lstlisting}[language=C++]
+#include "parent.hpp"
+
+void CreatePipe(int *fd) {
+    int status;
+    status = pipe(fd);
+    if (status == -1) {
+        std::cerr << "Failed pipe()\n";
+        exit(-1);
+    }
+}
+
+int CreateFork() {
+    int pid;
+    pid = fork();
+    if (pid == -1) {
+        std::cerr << "Failed fork()\n";
+        exit(-2);
+    }
+    return pid;
+}
+
+void DoClose(int fd) {
+    int status;
+    status = close(fd);
+    if (status == -1) {
+        std::cerr << "Failed close()\n";
+        exit(-3);
+    }
+}
+
+void DoDup(int a, int b) {
+    int status;
+    status = dup2(a, b);
+    if (status == -1) {
+        std::cerr << "Failed dup2()\n";
+        exit(-4);
+    }
+}
+
+int ParentWork() {
+    pid_t pid;
+    int status;
+    int capacity = 0;
+    int fd1[2];
+    int fd2[2];
+    int connect[2];
+    char *child1;
+    char *child2;
+    std::string line;
+
+    child1 = getenv("PATH_CHILD1");
+    child2 = getenv("PATH_CHILD2");
+
+    CreatePipe(fd1);
+    CreatePipe(fd2);
+    CreatePipe(connect);
+
+    pid = CreateFork();
+    if (pid == 0) { // child 1
+        DoClose(connect[0]);
+        DoClose(fd1[1]);
+        DoDup(connect[1], STDOUT_FILENO);
+        if (execlp(child1, "lower.out", std::to_string(fd1[0]).c_str(), nullptr) == -1) {
+            std::cerr << "Failed execlp()\n";
+            exit(-5);
+        }
+    }
+    pid = CreateFork();
+    if (pid == 0) { // child 2
+        DoClose(connect[1]);
+        DoClose(fd2[0]);
+        DoDup(connect[0], STDIN_FILENO);
+        if (execlp(child2, "underscore.out", std::to_string(fd2[1]).c_str(), nullptr) == -1) {
+            std::cerr << "Failed execlp()\n";
+            exit(-5);
+        }
+    }
+
+    if (pid != 0) {
+        DoClose(fd1[0]);
+        DoClose(fd2[1]);
+        char chWrite;
+        char end = '\0';
+        char toOut[256];
+        int readCount;
+        while (std::getline(std::cin, line)) {
+            write(fd1[1], line.c_str(), line.size());
+
+            chWrite = '\n';
+            write(fd1[1], &chWrite, sizeof(chWrite));
+
+            capacity += line.size() + 1;
+        }
+        write(fd1[1], &end, sizeof(end));
+
+        while(capacity > 0) {
+            readCount = read(fd2[0], toOut, sizeof(toOut));
+            if (readCount != -1) {
+                capacity -= readCount;
+            }
+            //std::cout << toOut << std::flush;
+            for (int i = 0; i < readCount; ++i) {
+                std::cout << toOut[i] << std::flush;
+            }   
+        }
+    }
+
+    waitpid(-1, &status, 0);
+    waitpid(-1, &status, 0);
+    return 0;
+}
+
+\end{lstlisting}
+
+lower.cpp
+\begin{lstlisting}[language=C++]
+#include <iostream>
+#include <string>
+#include <unistd.h>
+#include <sys/wait.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+
+int main (int argc, char** argv) {
+    if (argc != 2) {
+        std::cerr << "Wrong argc in lower.out\n";
+        exit(-6);
+    }
+    char chLow;
+    int fd = std::atoi(argv[1]);
+    while(true) {
+        read(fd, &chLow, sizeof(chLow));
+        if(chLow == '\0') {
+            break;
+        }
+        chLow = (char)tolower(chLow);
+        std::cout << chLow << std::flush;
+    }
+    std::cout << '\0';
+}
+\end{lstlisting}
+
+underscore.cpp
+\begin{lstlisting}[language=C++]
+#include <iostream>
+#include <string>
+#include <unistd.h>
+#include <sys/wait.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+
+int main (int argc, char** argv) {
+    if (argc != 2) {
+        std::cerr << "Wrong argc in underscore.out\n";
+        exit(-6);
+    }
+    char ch;
+    int fd = std::atoi(argv[1]);
+    (void)argc;
+    while(true) {
+        std::cin.get(ch);
+        if (ch == ' ') {
+            ch = '_';
+        } else if (ch == '\0') {
+            break;
+        }
+        write(fd, &ch, sizeof(ch));
+    }
+}
+
+\end{lstlisting}
+
+parent.cpp
+\begin{lstlisting}[language=C++]
+#include "parent.hpp"
+
+void parentProcess(const char *pathToChild) {
+    std::string fileName;
+    getline(std::cin, fileName);
+
+    int fd1[2], fd2[2];
+    createPipe(fd1);
+    createPipe(fd2);
+    
+    int pid = createChildProcess();
+    if (pid != 0) { // Parent process
+        close(fd1[0]);
+        close(fd2[1]);
+        
+        std::string str;
+        while (getline(std::cin, str)) {
+            str += "\n";
+            write(fd1[1], str.c_str(), str.length()); // from str to fd1[1]
+        }
+        close(fd1[1]);
+
+        std::stringstream output = readFromPipe(fd2[0]);
+        while(std::getline(output, str)) {
+            std::cout << str << std::endl;
+        }
+        close(fd2[0]);
+    } else { // Child process
+        close(fd1[1]);
+        close(fd2[0]);
+
+        if (dup2(fd1[0], STDIN_FILENO) == -1 || dup2(fd2[1], STDOUT_FILENO) == -1) {
+            perror("Error with dup2");
+            exit(EXIT_FAILURE);
+        }
+        
+        if (execlp(pathToChild, pathToChild, fileName.c_str(), nullptr) == -1) { // to child.cpp
+            perror("Error with execlp");
+            exit(EXIT_FAILURE);
+        } 
+    }
+}
+\end{lstlisting}
+
+main.cpp
+\begin{lstlisting}[language=C++]
+#include "parent.hpp"
+
+int main() {
+    ParentWork();
+    return 0;
+}
+\end{lstlisting}
+
+\newpage
+\section{Тесты}
+
+\begin{lstlisting}[language=C++]
+#include <iostream>
+#include <gtest/gtest.h>
+
+#include "parent.hpp"
+
+void TestParent(std::string &src, std::string &res) {
+    std::istringstream srcStream(src);
+
+    std::streambuf* buf = std::cin.rdbuf(srcStream.rdbuf());
+
+    testing::internal::CaptureStdout();
+    ParentWork(); 
+    ASSERT_EQ(testing::internal::GetCapturedStdout(), res + '\n'); 
+
+    std::cin.rdbuf(buf);
+}
+
+
+TEST(cin_test, ONE) {
+    std::string src = "       ";
+    std::string res = "_______";
+    TestParent(src, res);
+}
+
+TEST(cin_test, TWO) {
+    std::string src = "AHAHAHAHAH";
+    std::string res = "ahahahahah";
+    TestParent(src, res);
+}
+
+TEST(cin_test, THREE) {
+    std::string src = "   HELLO wOrLd 12 3";
+    std::string res = "___hello_world_12_3";
+    TestParent(src, res);
+}
+
+\end{lstlisting}
+
+\newpage
+\section{Запуск тестов}
+\begin{verbatim}
+roman@DESKTOP-K3DH39N:~/MAI/MAI_OS_labs/build/tests/lab1_test$ ./lab1_test 
+Running main() from /home/roman/MAI/MAI_OS_labs/build/_deps/googletest-src/googletest/src/gtest_main.cc
+[==========] Running 3 tests from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 3 tests from cin_test
+[ RUN      ] cin_test.ONE
+[       OK ] cin_test.ONE (1 ms)
+[ RUN      ] cin_test.TWO
+[       OK ] cin_test.TWO (1 ms)
+[ RUN      ] cin_test.THREE
+[       OK ] cin_test.THREE (1 ms)
+[----------] 3 tests from cin_test (3 ms total)
+
+[----------] Global test environment tear-down
+[==========] 3 tests from 1 test suite ran. (3 ms total)
+[  PASSED  ] 3 tests.
+\end{verbatim}
+\newpage
+\section{Выводы}
+
+В результате выполнения данной лабораторной работы была написана программа на языке С++, осуществляющая работу с процессами и 
+взаимодействие между ними. Были приобретены практические навыки в управлении процессами в ОС и обеспечении обмена данных между процессами посредством каналов.
+\end{document}
