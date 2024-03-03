@@ -1,0 +1,437 @@
+\documentclass[a4paper, 12pt]{article}
+\usepackage{cmap}
+\usepackage[12pt]{extsizes}			
+\usepackage{mathtext} 				
+\usepackage[T2A]{fontenc}			
+\usepackage[utf8]{inputenc}			
+\usepackage[english,russian]{babel}
+\usepackage{setspace}
+\singlespacing
+\usepackage{amsmath,amsfonts,amssymb,amsthm,mathtools}
+\usepackage{fancyhdr}
+\usepackage{soulutf8}
+\usepackage{euscript}
+\usepackage{mathrsfs}
+\usepackage{listings}
+
+\usepackage[colorlinks=true, urlcolor=blue, linkcolor=black]{hyperref}
+
+\pagestyle{fancy}
+\usepackage{indentfirst}
+\usepackage[top=10mm]{geometry}
+\rhead{}
+\lhead{}
+\renewcommand{\headrulewidth}{0mm}
+\usepackage{tocloft}
+\renewcommand{\cftsecleader}{\cftdotfill{\cftdotsep}}
+\usepackage[dvipsnames]{xcolor}
+
+\lstdefinestyle{mystyle}{ 
+	keywordstyle=\color{OliveGreen},
+	numberstyle=\tiny\color{Gray},
+	stringstyle=\color{BurntOrange},
+	basicstyle=\ttfamily\footnotesize,
+	breakatwhitespace=false,         
+	breaklines=true,                 
+	captionpos=b,                    
+	keepspaces=true,                 
+	numbers=left,                    
+	numbersep=5pt,                  
+	showspaces=false,                
+	showstringspaces=false,
+	showtabs=false,                  
+	tabsize=2
+}
+
+\lstset{style=mystyle}
+
+\begin{document}
+\thispagestyle{empty}	
+\begin{center}
+	Московский авиационный институт
+	
+	(Национальный исследовательский университет)
+	
+	Факультет "Информационные технологии и прикладная математика"
+	
+	Кафедра "Вычислительная математика и программирование"
+	
+\end{center}
+\vspace{40ex}
+\begin{center}
+	\textbf{\large{Лабораторная работа №2 по курсу\linebreak \textquotedblleft Операционные системы\textquotedblright}}
+\end{center}
+\vspace{35ex}
+\begin{flushright}
+	\textit{Студент: } Иванов Андрей Кириллович
+	
+	\vspace{2ex}
+	\textit{Группа: } М8О-208Б-22
+	
+	\vspace{2ex}
+	\textit{Преподаватель: } Миронов Евгений Сергеевич
+	
+	\vspace{2ex}
+	\textit{Вариант: } 13
+	
+	\vspace{2ex}
+	\textit{Оценка: } \underline{\quad\quad\quad\quad\quad\quad}
+	
+	 \vspace{2ex}
+	\textit{Дата: } \underline{\quad\quad\quad\quad\quad\quad}
+	
+	\vspace{2ex}
+	\textit{Подпись: } \underline{\quad\quad\quad\quad\quad\quad}
+	
+\end{flushright}
+
+\vspace{5ex}
+
+\begin{vfill}
+	\begin{center}
+		Москва, 2023
+	\end{center}	
+\end{vfill}
+\newpage
+
+
+\begingroup
+\color{black}
+\tableofcontents\newpage
+\endgroup
+
+\section{Репозиторий}
+\href{https://github.com/kumaroid/osLabs}{https://github.com/kumaroid/osLabs}
+
+\section{Цель работы}
+Приобретение практических навыков в:
+\begin{itemize}
+    \item Освоении принципов работы с файловыми системами
+    \item Обеспечении обмена данных между процессами посредством технологии «File mapping»
+\end{itemize}
+
+\section{Задание}
+Составить и отладить программу на языке Си, осуществляющую работу с процессами и взаимодействие между ними в одной из двух операционных систем. В результате работы программа (основной процесс) должен создать для решение задачи один или несколько дочерних процессов. Взаимодействие между процессами осуществляется через системные сигналы/события и/или через отображаемые файлы (memory-mapped files).
+Необходимо обрабатывать системные ошибки, которые могут возникнуть в результате работы.
+
+\section{Описание работы программы}
+Задание аналогично первой лабораторной работе.
+
+В ходе выполнения лабораторной работы я использовал следующие системные вызовы:
+\begin{itemize}
+    \item fork() - создание нового процесса
+    \item sem\_open() - создание/открытие семафора
+    \item sem\_post() - увеличивание значения семафора и разблокировка ожидающих потоков
+    \item sem\_wait() - уменьшение значения семафора. Если 0, то вызывающий поток блокируется 
+    \item sem\_close() - закрытие семафора
+    \item shm\_open() - создание/открытие разделяемой памяти POSIX
+    \item shm\_unlink() - закрытие разделяемой памяти
+    \item ftruncate() - уменьшение длины файла до указанной  
+    \item mmap() - отражение файла или устройства в памяти
+    \item munmap() - снятие отражения
+    \item execlp() - запуск файла на исполнение
+\end{itemize}
+
+
+\newpage
+
+\section{Исходный код}
+utils.hpp
+\begin{lstlisting}[language=C++]
+#pragma once
+
+#include <iostream>
+#include <fstream>
+#include <string>
+#include <unistd.h>
+#include <sys/wait.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <string.h>
+#include <sys/mman.h>
+#include <sys/stat.h>     
+#include <fcntl.h>
+#include <unistd.h>
+#include <semaphore.h>
+
+sem_t* CreateSemaphore(const char *name, int value);
+int CreateShm(const char* name);
+char* MapSharedMemory(const int size, int fd);
+int CreateFork();
+
+constexpr const char *SEM_1 = "SEM_1";
+constexpr const char *SEM_2 = "SEM_2";
+constexpr const char *SEM_3 = "SEM_3";
+
+const int FILE_SIZE = 1024;
+
+\end{lstlisting}
+
+utils.cpp
+\begin{lstlisting}[language=C++]
+#include "utils.hpp"
+
+sem_t* CreateSemaphore(const char *name, int value) {
+    sem_t *semptr = sem_open(name, O_CREAT, S_IRUSR | S_IWUSR, value);
+    if (semptr == SEM_FAILED){
+        perror("Couldn't open the semaphore");
+        exit(EXIT_FAILURE);
+    }
+    return semptr;   
+}
+
+int CreateShm(const char* name) {
+    int fd = shm_open(name, O_CREAT | O_RDWR, S_IRUSR | S_IWUSR);
+    if (fd == -1) {
+        std::cerr << "Failed shm_open\n";
+        exit(-1);
+    }
+    ftruncate(fd, 1024);
+    return fd;
+}
+
+char* MapSharedMemory(const int size, int fd) {
+    char *memptr = (char*)mmap(nullptr, size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+    if (memptr == MAP_FAILED) {
+        perror("Error with file mapping");
+        exit(EXIT_FAILURE);
+    }
+    return memptr;
+}
+
+int CreateFork() {
+    int pid;
+    pid = fork();
+    if (pid == -1) {
+        std::cerr << "Failed fork()\n";
+        exit(-2);
+    }
+    return pid;
+}
+\end{lstlisting}
+
+parent.hpp
+\begin{lstlisting}[language=C++]
+#pragma once
+
+
+#include "utils.hpp"
+
+int ParentWork();
+\end{lstlisting}
+
+parent.сpp
+\begin{lstlisting}[language=C++]
+#include "parent.hpp"
+#include "utils.hpp"
+
+int ParentWork() {
+    pid_t pid;
+    int status;;
+    char *child1;
+    char *child2;
+    std::string line;
+
+    char* name1 = "/shm1";
+    sem_t *semptr1 = CreateSemaphore(SEM_1, 0);
+    int shd_fd1 = CreateShm(name1);
+    char *memptr1 = MapSharedMemory(FILE_SIZE, shd_fd1);
+
+    char* name2 = "/shm2";
+    sem_t *semptr2 = CreateSemaphore(SEM_2, 0);
+    int shd_fd2 = CreateShm(name2);
+    char *memptr2 = MapSharedMemory(FILE_SIZE, shd_fd2);
+
+    char* name3 = "/shm3";
+    sem_t *semptr3 = CreateSemaphore(SEM_3, 0);
+    int shd_fd3 = CreateShm(name3);
+    char *memptr3 = MapSharedMemory(FILE_SIZE, shd_fd3);
+
+    child1 = getenv("PATH_CHILD1");
+    child2 = getenv("PATH_CHILD2");
+
+    pid = CreateFork();
+    if (pid == 0) { // child 1
+        if (execlp(child1, "lower.out", name1, name2, nullptr) == -1) {
+            std::cerr << "Failed execlp()\n";
+            exit(-5);
+        }
+    }
+
+    pid = CreateFork();
+    if (pid == 0) { // child 2
+        if (execlp(child2, "underscore.out", name2, name3, nullptr) == -1) {
+            std::cerr << "Failed execlp()\n";
+            exit(-5);
+        }
+    }
+
+    if (pid != 0) {
+        while (std::getline(std::cin, line)) {
+            line += '\n';
+            strcpy(memptr1, line.c_str());
+            sem_post(semptr1);
+
+            if (line == "\n") {
+                strcpy(memptr1, "\0");
+                sem_post(semptr1);
+                break;
+            }
+            sem_wait(semptr3);
+            std::string_view st(memptr3);
+            std::string s = {st.begin(), st.end()};
+            if (s != "\n") {
+                std::cout << s << std::endl;
+                strcpy(memptr3, "\n");
+            }
+        }
+    }
+
+    waitpid(-1, &status, 0);
+    waitpid(-1, &status, 0);
+
+    sem_close(semptr1);
+    sem_unlink(SEM_1);
+    shm_unlink("/shm1");
+    munmap(memptr1, FILE_SIZE);
+    close(shd_fd1);
+    
+    sem_close(semptr2);
+    sem_unlink(SEM_2);
+    shm_unlink("/shm2");
+    munmap(memptr2, FILE_SIZE);
+    close(shd_fd2);
+
+    sem_close(semptr3);
+    sem_unlink(SEM_3);
+    shm_unlink("/shm3");
+    munmap(memptr3, FILE_SIZE);
+    close(shd_fd3);
+    return 0;
+}
+
+\end{lstlisting}
+
+underscore.сpp
+\begin{lstlisting}[language=C++]
+#include "utils.hpp"
+
+int main (int argc, char** argv) {
+    if (argc != 3) {
+        std::cerr << "Wrong argc in underscore.out\n";
+        exit(-6);
+    }
+
+    const char* fileName = argv[1];
+    const char* fileName2 = argv[2];
+
+    sem_t *semptr1 = CreateSemaphore(SEM_2, 0);
+    int shd_fd1 = CreateShm(fileName);
+    char *memptr1 = MapSharedMemory(FILE_SIZE, shd_fd1);
+
+    sem_t *semptr2 = CreateSemaphore(SEM_3, 0);
+    int shd_fd2 = CreateShm(fileName2);
+    char *memptr2 = MapSharedMemory(FILE_SIZE, shd_fd2);
+
+    while(true) {
+        sem_wait(semptr1);
+        std::string_view st(memptr1);
+        std::string s = {st.begin(), st.end()};
+        for (int i = 0; i < s.size(); ++i) {
+            if (s[i] == ' ') {
+                s[i] = '_';
+            }
+        }
+        
+        if (s != "\n")  {
+            strcpy(memptr2, s.c_str());
+            strcpy(memptr1, "\n");
+            sem_post(semptr2);
+        }
+
+        if (s == "\0") {
+            break;
+        }
+    }
+
+    sem_close(semptr1);
+    sem_unlink(SEM_2);
+    shm_unlink(fileName);
+    munmap(memptr1, FILE_SIZE);
+    close(shd_fd1);
+
+    sem_close(semptr2);
+    sem_unlink(SEM_3);
+    shm_unlink(fileName2);
+    munmap(memptr2, FILE_SIZE);
+    close(shd_fd2);
+
+}
+    
+\end{lstlisting}
+
+\newpage
+\section{Тесты}
+\begin{lstlisting}[language=C++]
+#include <iostream>
+#include <gtest/gtest.h>
+
+#include "parent.hpp"
+
+void TestParent(std::string &src, std::string &res) {
+    std::istringstream srcStream(src);
+
+    std::streambuf* buf = std::cin.rdbuf(srcStream.rdbuf());
+
+    testing::internal::CaptureStdout();
+    ParentWork(); 
+    ASSERT_EQ(testing::internal::GetCapturedStdout(), res + '\n'); 
+
+    std::cin.rdbuf(buf);
+}
+
+
+TEST(cin_test, ONE) {
+    std::string src = "       \n\n";
+    std::string res = "_______\n";
+    TestParent(src, res);
+}
+
+TEST(cin_test, TWO) {
+    std::string src = "AHAHAHAHAH\n\n";
+    std::string res = "ahahahahah\n";
+    TestParent(src, res);
+}
+
+TEST(cin_test, THREE) {
+    std::string src = "   HELLO wOrLd 12 3\n\n";
+    std::string res = "___hello_world_12_3\n";
+    TestParent(src, res);
+}
+
+\end{lstlisting}
+
+\newpage
+\section{Запуск тестов}
+\begin{verbatim}
+andrew@DESKTOP-K3DH39N:~/MAI/osLabs/build/tests$ ./lab3_test 
+Running main() from /home/andrew/MAI/osLabs/build/_deps/googletest-src/googletest/src/gtest_main.cc
+[==========] Running 3 tests from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 3 tests from cin_test
+[ RUN      ] cin_test.ONE
+[       OK ] cin_test.ONE (14 ms)
+[ RUN      ] cin_test.TWO
+[       OK ] cin_test.TWO (1 ms)
+[ RUN      ] cin_test.THREE
+[       OK ] cin_test.THREE (1 ms)
+[----------] 3 tests from cin_test (16 ms total)
+
+[----------] Global test environment tear-down
+[==========] 3 tests from 1 test suite ran. (16 ms total)
+[  PASSED  ] 3 tests.
+\end{verbatim}
+
+\newpage
+\section{Выводы}
+В результате выполнения данной лабораторной работы была написана программа на языке С++, осуществляющая работу с процессами и взаимодействие между ними через системные сигналы и отображаемые файлы. Были приобретены практические навыки в освоении принципов работы с файловыми системами и обеспечении обмена данных между процессами посредством технологии «File mapping».\end{document}
